@@ -669,11 +669,22 @@
         let currentRound = 1;
         let isReviewMode = false;
         let reviewQuestions = [];
+        let shuffledQuestions = []; // Store shuffled version of questions
         let stats = {
             'not-learned': 0,
             'still-learning': 0,
             'mastered': 0
         };
+        
+        // Fisher-Yates shuffle algorithm
+        function shuffleArray(array) {
+            const shuffled = [...array]; // Create a copy
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
         
         function displayQuestion() {
             if (currentQuestion >= getCurrentQuestionSet().length) {
@@ -712,18 +723,20 @@
         }
         
         function getCurrentQuestionSet() {
-            return isReviewMode ? reviewQuestions : questions;
+            return isReviewMode ? reviewQuestions : shuffledQuestions;
         }
         
         function getUnmasteredQuestions() {
-            return questions.filter((question, index) => {
-                const result = questionResults[index];
+            return shuffledQuestions.filter((question, shuffledIndex) => {
+                // Find original index of this question
+                const originalIndex = questions.findIndex(q => q.text === question.text);
+                const result = questionResults[originalIndex];
                 return !result || result.status !== 'mastered';
             });
         }
         
         function startReviewRound() {
-            reviewQuestions = getUnmasteredQuestions();
+            reviewQuestions = shuffleArray(getUnmasteredQuestions()); // Shuffle review questions too
             if (reviewQuestions.length === 0) {
                 showCompletion();
                 return;
@@ -757,10 +770,8 @@
             const isCorrect = selectedOption === question.correct;
             const resultMessage = document.getElementById('resultMessage');
             
-            // Find the original question index if in review mode
-            const originalIndex = isReviewMode ? 
-                questions.findIndex(q => q.text === question.text) : 
-                currentQuestion;
+            // Find the original question index
+            const originalIndex = questions.findIndex(q => q.text === question.text);
             
             // Color the options
             const options = document.querySelectorAll('.option');
@@ -858,6 +869,7 @@
             currentRound = 1;
             isReviewMode = false;
             reviewQuestions = [];
+            shuffledQuestions = shuffleArray(questions); // Create new shuffle on reset
             stats = {'not-learned': 0, 'still-learning': 0, 'mastered': 0};
             
             const roundIndicator = document.getElementById('roundIndicator');
@@ -871,8 +883,14 @@
             displayQuestion();
         }
         
-        // Initialize
-        displayQuestion();
+        // Initialize the quiz
+        function initializeQuiz() {
+            shuffledQuestions = shuffleArray(questions); // Shuffle questions on first load
+            displayQuestion();
+        }
+        
+        // Initialize when page loads
+        initializeQuiz();
     </script>
 </body>
 </html>
