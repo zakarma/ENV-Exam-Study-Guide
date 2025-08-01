@@ -188,6 +188,21 @@
             border: 1px solid #f5c6cb;
         }
         
+        .round-indicator {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        
+        .review-mode {
+            background: #ffc107 !important;
+            color: #212529 !important;
+        }
+        
         .completion-message {
             text-align: center;
             padding: 30px;
@@ -210,6 +225,7 @@
         <div class="header">
             <h1>Environmental Science Quiz Tracker</h1>
             <p>Quizlet-Style Learning System</p>
+            <div id="roundIndicator" class="round-indicator">Round 1 - Initial Learning</div>
         </div>
         
         <div class="stats">
@@ -649,6 +665,10 @@
         
         let currentQuestion = 0;
         let selectedOption = -1;
+        let questionResults = []; // Track results for each question
+        let currentRound = 1;
+        let isReviewMode = false;
+        let reviewQuestions = [];
         let stats = {
             'not-learned': 0,
             'still-learning': 0,
@@ -656,13 +676,20 @@
         };
         
         function displayQuestion() {
-            if (currentQuestion >= questions.length) {
-                showCompletion();
+            if (currentQuestion >= getCurrentQuestionSet().length) {
+                if (isReviewMode || getUnmasteredQuestions().length === 0) {
+                    showCompletion();
+                } else {
+                    startReviewRound();
+                }
                 return;
             }
             
-            const question = questions[currentQuestion];
-            document.getElementById('questionNumber').textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
+            const questionSet = getCurrentQuestionSet();
+            const question = questionSet[currentQuestion];
+            const totalQuestions = questionSet.length;
+            
+            document.getElementById('questionNumber').textContent = `Question ${currentQuestion + 1} of ${totalQuestions}`;
             document.getElementById('questionText').textContent = question.text;
             
             const optionsList = document.getElementById('optionsList');
@@ -684,6 +711,35 @@
             selectedOption = -1;
         }
         
+        function getCurrentQuestionSet() {
+            return isReviewMode ? reviewQuestions : questions;
+        }
+        
+        function getUnmasteredQuestions() {
+            return questions.filter((question, index) => {
+                const result = questionResults[index];
+                return !result || result.status !== 'mastered';
+            });
+        }
+        
+        function startReviewRound() {
+            reviewQuestions = getUnmasteredQuestions();
+            if (reviewQuestions.length === 0) {
+                showCompletion();
+                return;
+            }
+            
+            isReviewMode = true;
+            currentQuestion = 0;
+            currentRound++;
+            
+            const roundIndicator = document.getElementById('roundIndicator');
+            roundIndicator.textContent = `Round ${currentRound} - Review (${reviewQuestions.length} questions to master)`;
+            roundIndicator.classList.add('review-mode');
+            
+            displayQuestion();
+        }
+        
         function selectOption(index, element) {
             document.querySelectorAll('.option').forEach(opt => {
                 opt.classList.remove('selected');
@@ -696,9 +752,15 @@
         function submitAnswer() {
             if (selectedOption === -1) return;
             
-            const question = questions[currentQuestion];
+            const questionSet = getCurrentQuestionSet();
+            const question = questionSet[currentQuestion];
             const isCorrect = selectedOption === question.correct;
             const resultMessage = document.getElementById('resultMessage');
+            
+            // Find the original question index if in review mode
+            const originalIndex = isReviewMode ? 
+                questions.findIndex(q => q.text === question.text) : 
+                currentQuestion;
             
             // Color the options
             const options = document.querySelectorAll('.option');
@@ -711,25 +773,35 @@
                 option.onclick = null; // Disable clicking
             });
             
-            // Show result message and update stats
+            // Determine status and update results
+            let status;
             if (isCorrect) {
+                status = 'mastered';
                 resultMessage.textContent = "✅ Correct! This question is MASTERED";
                 resultMessage.className = "result-message result-correct";
-                stats['mastered']++;
             } else {
-                // Determine if it's still learning or not learned based on some logic
-                // For now, let's say if it's the first attempt, it's "still learning"
-                // In a real app, you might track attempts per question
-                const isStillLearning = Math.random() > 0.5; // Random for demo, you could make this smarter
-                if (isStillLearning) {
-                    resultMessage.textContent = "⚠️ Incorrect. This question is STILL LEARNING";
-                    resultMessage.className = "result-message result-incorrect";
-                    stats['still-learning']++;
+                // Check if this question was previously attempted
+                const previousResult = questionResults[originalIndex];
+                if (previousResult && previousResult.status === 'still-learning') {
+                    status = 'not-learned';
+                    resultMessage.textContent = "❌ Incorrect again. This question is NOT LEARNED";
                 } else {
-                    resultMessage.textContent = "❌ Incorrect. This question is NOT LEARNED";
-                    resultMessage.className = "result-message result-incorrect";
-                    stats['not-learned']++;
+                    status = 'still-learning';
+                    resultMessage.textContent = "⚠️ Incorrect. This question is STILL LEARNING";
                 }
+                resultMessage.className = "result-message result-incorrect";
+            }
+            
+            // Update question results
+            if (!questionResults[originalIndex] || questionResults[originalIndex].status !== 'mastered') {
+                // Remove old status from stats if it exists
+                if (questionResults[originalIndex]) {
+                    stats[questionResults[originalIndex].status]--;
+                }
+                
+                // Add new status
+                questionResults[originalIndex] = { status: status, attempts: (questionResults[originalIndex]?.attempts || 0) + 1 };
+                stats[status]++;
             }
             
             resultMessage.classList.remove('hidden');
@@ -753,12 +825,13 @@
         
         function updateProgress() {
             const total = Object.values(stats).reduce((a, b) => a + b, 0);
-            const percentage = (total / questions.length) * 100;
+            const questionSet = getCurrentQuestionSet();
+            const percentage = (total / questions.length) * 100; // Always use total questions for overall progress
             document.getElementById('progressFill').style.width = percentage + '%';
         }
         
         function showCompletion() {
-            const total = Object.values(stats).reduce((a, b) => a + b, 0);
+            const total = questions.length;
             const percentage = Math.round((stats['mastered'] / total) * 100);
             
             document.getElementById('questionContainer').classList.add('hidden');
@@ -768,12 +841,29 @@
             document.getElementById('finalStillLearning').textContent = stats['still-learning'];
             document.getElementById('finalNotLearned').textContent = stats['not-learned'];
             document.getElementById('finalPercentage').textContent = percentage;
+            
+            // Update completion message for multiple rounds
+            const completionTitle = document.querySelector('#completionMessage h2');
+            if (currentRound > 1) {
+                completionTitle.textContent = `🎉 All Questions Mastered After ${currentRound} Rounds!`;
+            } else {
+                completionTitle.textContent = '🎉 Perfect Score - All Questions Mastered!';
+            }
         }
         
         function resetQuiz() {
             currentQuestion = 0;
             selectedOption = -1;
+            questionResults = [];
+            currentRound = 1;
+            isReviewMode = false;
+            reviewQuestions = [];
             stats = {'not-learned': 0, 'still-learning': 0, 'mastered': 0};
+            
+            const roundIndicator = document.getElementById('roundIndicator');
+            roundIndicator.textContent = 'Round 1 - Initial Learning';
+            roundIndicator.classList.remove('review-mode');
+            
             updateStats();
             updateProgress();
             document.getElementById('questionContainer').classList.remove('hidden');
