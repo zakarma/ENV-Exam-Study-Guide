@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Environmental Science Quiz Tracker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .stat {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .not-learned { color: #dc3545; }
+        .still-learning { color: #ffc107; }
+        .mastered { color: #28a745; }
+        
+        .question-container {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .question-number {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .question-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .options {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .option {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .option:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+        
+        .option.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+        
+        .btn-not-learned {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-still-learning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-mastered {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .progress-bar {
+            background: #e9ecef;
+            height: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .completion-message {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Environmental Science Quiz Tracker</h1>
+            <p>Quizlet-Style Learning System</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number not-learned" id="notLearnedCount">0</div>
+                <div>Not Learned</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number still-learning" id="stillLearningCount">0</div>
+                <div>Still Learning</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number mastered" id="masteredCount">0</div>
+                <div>Mastered</div>
+            </div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div id="questionContainer" class="question-container">
+            <div class="question-number" id="questionNumber">Question 1 of 60</div>
+            <div class="question-text" id="questionText">Ready to start? Click below to begin with the first question!</div>
+            <ul class="options" id="optionsList"></ul>
+            
+            <div class="controls">
+                <button class="btn btn-not-learned" onclick="markQuestion('not-learned')">
+                    ❌ Not Learned
+                </button>
+                <button class="btn btn-still-learning" onclick="markQuestion('still-learning')">
+                    ⚠️ Still Learning
+                </button>
+                <button class="btn btn-mastered" onclick="markQuestion('mastered')">
+                    ✅ Mastered
+                </button>
+            </div>
+        </div>
+        
+        <div id="completionMessage" class="completion-message hidden">
+            <h2>🎉 Congratulations!</h2>
+            <p>You've completed all 60 questions!</p>
+            <button class="btn" onclick="resetQuiz()" style="background: white; color: #28a745; margin-top: 15px;">
+                Start Over
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                text: "When an exponentially growing population multiplies so fast that it exceeds its carrying capacity and begins to degrade its environment the result will be:",
+                options: ["Overshoot and a population crash", "Course correction", "Population stabilization", "A renewable resource"],
+                correct: "A"
+            },
+            {
+                text: "Human populations are rapidly urbanizing and now more than 50% of all people live in cities. This:",
+                options: ["is unequivocally good for the environment", "is unequivocally bad for the environment", "can have both positive and negative impacts on the environment"],
+                correct: "C"
+            },
+            {
+                text: "Some scientists from Whoville conducted an environmental impact statement on a proposed industrial plant and found that there was a 50% chance that the plant would irrevocably pollute the drinking water for all residents of Whoville. The science is uncertain, however, and there is a 50% chance that the plant will cause no harm. Under these circumstances, the precautionary principle tells us that:",
+                options: [
+                    "we should pause before granting approval for the plant, to allow time for more assessments, rather than potentially causing a catastrophe.",
+                    "because there is a chance of harm, the industrial plant should never be constructed, and there is no need to further study the issue.",
+                    "we should continue with construction of the plant, because there is a 50% chance that there will be no harm at all, and we should only close the plant if we find evidence that the drinking water is contaminated.",
+                    "the precautionary principle is not relevant here, because it only applies to scientifically settled scenarios."
+                ],
+                correct: "A"
+            }
+        ];
+        
+        let currentQuestion = 0;
+        let stats = {
+            'not-learned': 0,
+            'still-learning': 0,
+            'mastered': 0
+        };
+        
+        function displayQuestion() {
+            if (currentQuestion >= questions.length) {
+                showCompletion();
+                return;
+            }
+            
+            const question = questions[currentQuestion];
+            document.getElementById('questionNumber').textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
+            document.getElementById('questionText').textContent = question.text;
+            
+            const optionsList = document.getElementById('optionsList');
+            optionsList.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const li = document.createElement('li');
+                li.className = 'option';
+                li.textContent = `${String.fromCharCode(65 + index)}. ${option}`;
+                li.onclick = () => selectOption(li);
+                optionsList.appendChild(li);
+            });
+        }
+        
+        function selectOption(element) {
+            document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+        
+        function markQuestion(level) {
+            stats[level]++;
+            updateStats();
+            currentQuestion++;
+            updateProgress();
+            displayQuestion();
+        }
+        
+        function updateStats() {
+            document.getElementById('notLearnedCount').textContent = stats['not-learned'];
+            document.getElementById('stillLearningCount').textContent = stats['still-learning'];
+            document.getElementById('masteredCount').textContent = stats['mastered'];
+        }
+        
+        function updateProgress() {
+            const total = Object.values(stats).reduce((a, b) => a + b, 0);
+            const percentage = (total / questions.length) * 100;
+            document.getElementById('progressFill').style.width = percentage + '%';
+        }
+        
+        function showCompletion() {
+            document.getElementById('questionContainer').classList.add('hidden');
+            document.getElementById('completionMessage').classList.remove('hidden');
+        }
+        
+        function resetQuiz() {
+            currentQuestion = 0;
+            stats = {'not-learned': 0, 'still-learning': 0, 'mastered': 0};
+            updateStats();
+            updateProgress();
+            document.getElementById('questionContainer').classList.remove('hidden');
+            document.getElementById('completionMessage').classList.add('hidden');
+            displayQuestion();
+        }
+        
+        // Initialize
+        displayQuestion();
+    </script>
+</body>
+</html>
