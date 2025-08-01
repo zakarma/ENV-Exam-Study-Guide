@@ -686,6 +686,30 @@
             return shuffled;
         }
         
+        // Shuffle answer options and track correct answer
+        function shuffleQuestionOptions(question) {
+            const originalOptions = [...question.options];
+            const correctAnswer = originalOptions[question.correct];
+            
+            // Create array of indices and shuffle them
+            const indices = Array.from({length: originalOptions.length}, (_, i) => i);
+            const shuffledIndices = shuffleArray(indices);
+            
+            // Create shuffled options array
+            const shuffledOptions = shuffledIndices.map(i => originalOptions[i]);
+            
+            // Find new position of correct answer
+            const newCorrectIndex = shuffledOptions.indexOf(correctAnswer);
+            
+            return {
+                ...question,
+                options: shuffledOptions,
+                correct: newCorrectIndex,
+                originalOptions: originalOptions,
+                originalCorrect: question.correct
+            };
+        }
+        
         function displayQuestion() {
             if (currentQuestion >= getCurrentQuestionSet().length) {
                 if (isReviewMode || getUnmasteredQuestions().length === 0) {
@@ -697,7 +721,11 @@
             }
             
             const questionSet = getCurrentQuestionSet();
-            const question = questionSet[currentQuestion];
+            const originalQuestion = questionSet[currentQuestion];
+            
+            // Shuffle the answer options for this question
+            const question = shuffleQuestionOptions(originalQuestion);
+            
             const totalQuestions = questionSet.length;
             
             document.getElementById('questionNumber').textContent = `Question ${currentQuestion + 1} of ${totalQuestions}`;
@@ -713,6 +741,9 @@
                 li.onclick = () => selectOption(index, li);
                 optionsList.appendChild(li);
             });
+            
+            // Store the shuffled question for answer checking
+            window.currentShuffledQuestion = question;
             
             // Reset UI
             document.getElementById('resultMessage').classList.add('hidden');
@@ -765,12 +796,11 @@
         function submitAnswer() {
             if (selectedOption === -1) return;
             
-            const questionSet = getCurrentQuestionSet();
-            const question = questionSet[currentQuestion];
+            const question = window.currentShuffledQuestion; // Use the shuffled version
             const isCorrect = selectedOption === question.correct;
             const resultMessage = document.getElementById('resultMessage');
             
-            // Find the original question index
+            // Find the original question index using the original question text
             const originalIndex = questions.findIndex(q => q.text === question.text);
             
             // Color the options
