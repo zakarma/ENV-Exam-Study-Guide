@@ -99,6 +99,18 @@
             border-color: #667eea;
         }
         
+        .option.correct {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        
+        .option.incorrect {
+            background: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+        
         .controls {
             display: flex;
             gap: 15px;
@@ -115,17 +127,12 @@
             flex: 1;
         }
         
-        .btn-not-learned {
-            background: #dc3545;
+        .btn-submit {
+            background: #667eea;
             color: white;
         }
         
-        .btn-still-learning {
-            background: #ffc107;
-            color: #212529;
-        }
-        
-        .btn-mastered {
+        .btn-next {
             background: #28a745;
             color: white;
         }
@@ -133,6 +140,13 @@
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         
         .progress-bar {
@@ -154,6 +168,26 @@
             display: none;
         }
         
+        .result-message {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        
+        .result-correct {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .result-incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
         .completion-message {
             text-align: center;
             padding: 30px;
@@ -161,6 +195,13 @@
             color: white;
             border-radius: 15px;
             margin-top: 20px;
+        }
+        
+        .final-stats {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
         }
     </style>
 </head>
@@ -191,26 +232,31 @@
         </div>
         
         <div id="questionContainer" class="question-container">
-            <div class="question-number" id="questionNumber">Question 1 of 60</div>
-            <div class="question-text" id="questionText">Ready to start? Click below to begin with the first question!</div>
+            <div class="question-number" id="questionNumber">Question 1 of 77</div>
+            <div class="question-text" id="questionText"></div>
             <ul class="options" id="optionsList"></ul>
             
+            <div id="resultMessage" class="result-message hidden"></div>
+            
             <div class="controls">
-                <button class="btn btn-not-learned" onclick="markQuestion('not-learned')">
-                    ❌ Not Learned
+                <button class="btn btn-submit" id="submitBtn" onclick="submitAnswer()">
+                    Submit Answer
                 </button>
-                <button class="btn btn-still-learning" onclick="markQuestion('still-learning')">
-                    ⚠️ Still Learning
-                </button>
-                <button class="btn btn-mastered" onclick="markQuestion('mastered')">
-                    ✅ Mastered
+                <button class="btn btn-next hidden" id="nextBtn" onclick="nextQuestion()">
+                    Next Question →
                 </button>
             </div>
         </div>
         
         <div id="completionMessage" class="completion-message hidden">
-            <h2>🎉 Congratulations!</h2>
-            <p>You've completed all 60 questions!</p>
+            <h2>🎉 Quiz Complete!</h2>
+            <div class="final-stats">
+                <h3>Final Results:</h3>
+                <p><span class="mastered">Mastered:</span> <span id="finalMastered">0</span> questions</p>
+                <p><span class="still-learning">Still Learning:</span> <span id="finalStillLearning">0</span> questions</p>
+                <p><span class="not-learned">Not Learned:</span> <span id="finalNotLearned">0</span> questions</p>
+                <p><strong>Overall Score: <span id="finalPercentage">0</span>%</strong></p>
+            </div>
             <button class="btn" onclick="resetQuiz()" style="background: white; color: #28a745; margin-top: 15px;">
                 Start Over
             </button>
@@ -222,12 +268,12 @@
             {
                 text: "When an exponentially growing population multiplies so fast that it exceeds its carrying capacity and begins to degrade its environment the result will be:",
                 options: ["Overshoot and a population crash", "Course correction", "Population stabilization", "A renewable resource"],
-                correct: "A"
+                correct: 0
             },
             {
                 text: "Human populations are rapidly urbanizing and now more than 50% of all people live in cities. This:",
                 options: ["is unequivocally good for the environment", "is unequivocally bad for the environment", "can have both positive and negative impacts on the environment"],
-                correct: "C"
+                correct: 2
             },
             {
                 text: "Some scientists from Whoville conducted an environmental impact statement on a proposed industrial plant and found that there was a 50% chance that the plant would irrevocably pollute the drinking water for all residents of Whoville. The science is uncertain, however, and there is a 50% chance that the plant will cause no harm. Under these circumstances, the precautionary principle tells us that:",
@@ -237,11 +283,372 @@
                     "we should continue with construction of the plant, because there is a 50% chance that there will be no harm at all, and we should only close the plant if we find evidence that the drinking water is contaminated.",
                     "the precautionary principle is not relevant here, because it only applies to scientifically settled scenarios."
                 ],
-                correct: "A"
+                correct: 0
+            },
+            {
+                text: "Improved sanitation, an increased food supply and control of disease spreading organisms has resulted in which of the following effects on human population?",
+                options: ["Increased death rate", "Increased birth rate", "Accelerated population growth rate", "Decelerated population growth rate"],
+                correct: 2
+            },
+            {
+                text: "Human population growth rate underwent its greatest increase during which period of history?",
+                options: ["Pre-agricultural times", "Pre-industrial times", "The Roman Empire", "The late 20th Century"],
+                correct: 3
+            },
+            {
+                text: "The carrying capacity of an environment represents?",
+                options: ["The transition between juvenile and adult populations", "The maximum number of a particular species that an environment can support", "The replacement number of adults in a population", "The minimum number of a particular species that an environment can support"],
+                correct: 1
+            },
+            {
+                text: "The human population growth currently is labeled as a logistic growth curve. This type of growth curve is characterized as:",
+                options: ["a flat line that shows high population growth to low population growth", "a descending line that depicts a reduction in population growth", "an ascending straight line that depicts a constant level of population growth", "an S-shaped curve that shows rapid growth"],
+                correct: 3
+            },
+            {
+                text: "The human population of the United States has increased over the last few hundred years due to all of the following reasons except:",
+                options: ["improvements in health care", "improvements in agriculture", "the death rate has decreased", "the age of first childbirth has increased"],
+                correct: 3
+            },
+            {
+                text: "Which of the following is the correct sequence of steps, from beginning to end, in the Scientific Method:",
+                options: ["Observations - hypothesis - controlled experiment - conclusions", "Conclusions - observations - alter observations to fit conclusions - future research and awards", "Hypothesis - controlled experiment - inferences - conclusions", "Conclusions - controlled experiment - observations - hypothesis"],
+                correct: 0
+            },
+            {
+                text: "Based on her knowledge of the theory of gravity a teacher walks into her science classroom and tells the students that if someone drops a ball off the roof of the building, it will fall to the ground. This is an example of:",
+                options: ["deductive reasoning", "speculation", "manipulative reasoning", "inductive reasoning"],
+                correct: 0
+            },
+            {
+                text: "The manipulated variable is also called the:",
+                options: ["observational variable", "independent variable", "dependent variable", "exciting variable"],
+                correct: 1
+            },
+            {
+                text: "An example of quantitative data is:",
+                options: ["sight", "smell", "taste", "mass (in grams)"],
+                correct: 3
+            },
+            {
+                text: "A scientific hypothesis:",
+                options: ["can never be the true answer to a scientific question", "is similar to a theory because it is based on numerous experiments", "can never become a scientific fact", "is really just an educated guess at the answer to a question"],
+                correct: 3
+            },
+            {
+                text: "Like the scientific method, decision making using scientific data is:",
+                options: ["Best guesses", "Dictatorial", "A process of steps", "Unilateral"],
+                correct: 2
+            },
+            {
+                text: "Measurements allow scientists to:",
+                options: ["Make predictions", "Disprove a statement", "Visualize relationships", "All of the above"],
+                correct: 3
+            },
+            {
+                text: "Measurements without an estimate of uncertainty are:",
+                options: ["Correct", "Scientific", "Accurate", "Useless"],
+                correct: 3
+            },
+            {
+                text: "Pseudoscience is:",
+                options: ["Untestable", "All of the above", "Lacks empirical evidence", "Based on faulty reasoning"],
+                correct: 1
+            },
+            {
+                text: "Dr. Smith is stressed about waking up and making it on time to the airport in order to catch his plane. He sets the alarm on his digital watch (reads to 1/100 of a second) and arrives at 7:00:00.00am. Unfortunately, every other clock in the airport terminal reads about 7:20am. Dr. smith is unable to make it through security in time and missed his flight. Which of the following is a correct statement about Dr. Smith's watch?",
+                options: ["it is a lost timepiece", "it is accurate, but not precise", "it is neither accurate nor precise", "it is precise, but not accurate"],
+                correct: 3
+            },
+            {
+                text: "Which statement is TRUE:",
+                options: ["Oxygen gas comprises 80% of the Earth's (dry) atmosphere", "Liquid water forms the basis of all life forms on Earth", "3.5 billion years ago oxygen was found in high concentrations on earth"],
+                correct: 1
+            },
+            {
+                text: "Which of the following set Earth apart from other planets in the solar system?",
+                options: ["Earth is the only planet that has liquid water", "Earth is the only planet that has water at its triple point (gas, liquid, and solid phases at the same time)", "Earth is the only planet that exhibits plate tectonics", "Earth is the only planet that exhibits life", "a, b, c, and d are correct"],
+                correct: 4
+            },
+            {
+                text: "What is an example of negative feedback?",
+                options: ["when its too cold and you shiver", "Warmer temperatures will lead to increased water vapor in the atmosphere (higher humidity)", "Colder temperatures leading to growth of the polar ice caps", "exponential growth"],
+                correct: 0
+            },
+            {
+                text: "Nitrogen has a very high concentration in the atmosphere and is cycled very slowly into and out of the atmosphere. Water vapor has a lower concentration in the atmosphere and is cycled quite rapidly. What statement is true:",
+                options: ["Nitrogen has a lower residence time in the atmosphere than water vapor", "Nitrogen and water vapor have roughly the same residence time in the atmosphere", "Nitrogen has a higher residence time in the atmosphere than water vapor"],
+                correct: 2
+            },
+            {
+                text: "What term defines the steady state that all natural systems move towards without influence of people:",
+                options: ["Ecological dynamics", "Stable equilibrium", "Dynamic equilibrium"],
+                correct: 2
+            },
+            {
+                text: "In this picture, what is the example of kinetic energy? (The picture shows the light from the sun, a lion feeding on its prey, and a zebra running at full speed.)",
+                options: ["sun's rays", "lion's food", "running zebra"],
+                correct: 2
+            },
+            {
+                text: "Which of the following is not a greenhouse gas?",
+                options: ["Methane", "Carbon dioxide", "Water Vapor", "Nitrogen"],
+                correct: 3
+            },
+            {
+                text: "Which of the following statements is true:",
+                options: ["Both Tallahassee and Alberta Canada receive more solar radiation during the northern hemisphere summer than winter, but the difference between summer and winter incoming radiation is greater in Tallahassee than in Alberta.", "Both Tallahassee and Alberta Canada receive more solar radiation during the northern hemisphere summer than winter, but the difference between summer and winter incoming radiation is greater in Alberta than in Tallahassee", "Alberta Canada receives more solar radiation during the northern hemisphere summer than winter, while Tallahassee receives more solar radiation during the northern hemisphere winter than northern hemisphere summer.", "Tallahassee receives more solar radiation during the northern hemisphere summer than winter, while Alberta Canada receives more solar radiation during the northern hemisphere winter than northern hemisphere summer."],
+                correct: 1
+            },
+            {
+                text: "Storms are caused when:",
+                options: ["Warm air rises and cools, causing the water vapor inside to condense, form clouds, and then eventually fall as rain.", "Coriolis causes wind to swirl leading to strong winds fueled by the rotating Earth.", "Coriolis cyclones mediate a moist condensation long-wave energy transfer.", "Cold air sinks, bringing rain with it."],
+                correct: 0
+            },
+            {
+                text: "The Gulf Stream:",
+                options: ["redistributes wind energy around the globe", "transports warm water from equatorial regions towards the north pole", "transports cold water from equatorial regions towards the north pole", "is a tributary of the Mississippi River"],
+                correct: 1
+            },
+            {
+                text: "Soil Organic Carbon is recycled back to the atmosphere by:",
+                options: ["Decomposers", "Bacteria", "Heterotrophic respiration", "all of the above"],
+                correct: 3
+            },
+            {
+                text: "This element generally forms 4 covalent bonds with other elements:",
+                options: ["Carbon", "Nitrogen", "Oxygen", "Hydrogen"],
+                correct: 0
+            },
+            {
+                text: "Soil organic matter formation is a transfer directly from the biosphere to the:",
+                options: ["Atmosphere", "Hydrosphere", "Lithosphere"],
+                correct: 2
+            },
+            {
+                text: "Which of the equations below is the correct one for NEP (net ecosystem production)?",
+                options: ["GPP (which is gross CO2 uptake by plants)", "GPP - Autotrophic Respiration", "GPP - autotrophic respiration - soil (heterotrophic) respiration"],
+                correct: 2
+            },
+            {
+                text: "The life form that formed first on the early earth was:",
+                options: ["Eukaryotes", "Prokaryotes", "Algae", "Mastodons", "Mushrooms"],
+                correct: 1
+            },
+            {
+                text: "The photic zone (sunlit zone) of the ocean extends to a depth of 3000 meters.",
+                options: ["True", "False"],
+                correct: 1
+            },
+            {
+                text: "Ocean acidification due to higher Carbon dioxide concentrations in the atmosphere makes the pH of the ocean lower and this inhibits or reduces this process:",
+                options: ["Denitrification (formation of N2gas from nitrate)", "Calcification (formation of shells and coral skeleton)", "Upwelling (the surfacing of deep nutrient-rich water)", "The global conveyor belt (thermohaline circulation)", "Respiration of organic matter in the deep sea"],
+                correct: 1
+            },
+            {
+                text: "An excess of nutrients in a body of water like a lake will lead to:",
+                options: ["Eutrophication", "Oligotrification", "Electrification", "Remineralization"],
+                correct: 0
+            },
+            {
+                text: "This compound ion (NH4+) is:",
+                options: ["Carbonic acid", "An amino acid", "Ammonium", "Nitrate", "Oxygen"],
+                correct: 2
+            },
+            {
+                text: "Two elements that are considered \"nutrient elements\" for plants growth in the ocean and on land are:",
+                options: ["Nitrogen and chloride", "Nitrogen and Phosphorous", "Phosphorus and Sodium"],
+                correct: 1
+            },
+            {
+                text: "Earth is unique. What process maintain the earth as a habitable planet?",
+                options: ["Temperatures that permit liquid water", "Our atmosphere cannot block ultraviolet radiation from space", "non existent oxygen levels"],
+                correct: 0
+            },
+            {
+                text: "What is an example of positive feedback?",
+                options: ["exponential growth", "when it is too hot and you sweat", "when its too cold and you shiver"],
+                correct: 0
+            },
+            {
+                text: "The Coriolis effect:",
+                options: ["Causes the wind to turn to the left in the northern hemisphere.", "Is caused by the rotation of the Earth.", "Explains how hot air balloons work.", "Causes the seasons."],
+                correct: 1
+            },
+            {
+                text: "Hurricanes are sustained by:",
+                options: ["The latent heat released when water vapor in warm moist air condenses into water droplets.", "The Coriolis effect, which releases vast amounts of energy.", "Cold ocean water, beneath hot air, and the thermal inversion this can create.", "A series of negative feedbacks that cause the hurricane to grow stronger and stronger."],
+                correct: 0
+            },
+            {
+                text: "If everything else remained the same, but the surface ocean becomes warmer should we expect:",
+                options: ["Hurricane intensity to increase and frequency to decrease", "Hurricane intensity and frequency to both increase", "Hurricane intensity and frequency to both decrease", "Hurricane intensity to decrease and frequency to increase"],
+                correct: 1
+            },
+            {
+                text: "In 1911 this person proposed that the continents had once been together and that they had drifted apart:",
+                options: ["Charles Humbolt", "Charles Darwin", "Alfred Wegener", "Albert Einstein", "John Haber"],
+                correct: 2
+            },
+            {
+                text: "This equation below represents what process: CO2 + H2O → CH2O + O2",
+                options: ["Autotrophic respiration", "Heterotrophic respiration", "Photosynthesis", "Primary production"],
+                correct: 2
+            },
+            {
+                text: "The Redfield ratio, or the ratio of C:N:P in marine, microbial, and animal tissue is:",
+                options: ["250:125:48", "4:2:1", "106:16:1"],
+                correct: 2
+            },
+            {
+                text: "What part of the ocean is considered net heterotrophic:",
+                options: ["the coastal ocean", "the photic zone above 500 meters", "the deep dark zone below 500 meters"],
+                correct: 2
+            },
+            {
+                text: "What is an endemic species?",
+                options: ["a generalist species", "species found globally", "a species that is unique to a defined geographic location (e.g. it's not found elsewhere)", "a specialist species"],
+                correct: 2
+            },
+            {
+                text: "Which statement is FALSE?",
+                options: ["The farther away from a continent the fewer the species", "islands tend to have more species than continents", "Islands tend to maintain consistent number of species over time", "The smaller the island the fewer the species"],
+                correct: 1
+            },
+            {
+                text: "Which of the following is incorrectly paired?",
+                options: ["species dominance: the most aggressive species", "species evenness: the relative abundance of species", "species richness: the total number of species", "habitat diversity: the different kinds of habitats in a given unit area", "genetic diversity: the total number of genetic characteristics"],
+                correct: 0
+            },
+            {
+                text: "The major force(s) causing the genetic divergence of two populations is/are:",
+                options: ["mutation and natural selection", "natural selection and the variety of other species with which each population interbreeds", "the complete lack of sexual reproduction in the two populations", "reproduction"],
+                correct: 0
+            },
+            {
+                text: "Which statement is correct?",
+                options: ["Convergent evolution is when organisms have similar features but they don't have a common ancestor", "Divergent evolution is when organisms have similar features but they don't have a common ancestor", "Convergent evolution occurs when May look and act differently but they are still related", "Divergent evolution occurs when May look and act the same but they are not related"],
+                correct: 0
+            },
+            {
+                text: "Which of these does an ecosystem include:",
+                options: ["1) The primary producers in a food web", "2) The consumers in a food web", "3) The decomposers in a food web", "4) The abiotic (non-living) component of the environment", "1, 2, 3, and 4", "1, 2, and 4 only", "1, 2, and 3 only", "1 and 4 only"],
+                correct: 4
+            },
+            {
+                text: "Which organism in this food chain of a hot spring ecosystem in Yellowstone National Park is the autotroph? Algae ⟹ herbivorous flies ⟹ killdeer birds ⟹ grey wolves ⟹ decomposing bacteria",
+                options: ["Grey wolves", "Decomposing bacteria", "Killdeer birds", "Algae", "Herbivorous flies"],
+                correct: 3
+            },
+            {
+                text: "Ecosystems require:",
+                options: ["a) At least one species that is a primary producer (autotroph)", "b) At least one species that is an herbivore", "c) At least one species that is a carnivore", "d) At least one species that is a decomposer", "e) A fluid medium for element and energy transfer", "f) all of the above", "g) a, b, and c", "h) a, d, and e"],
+                correct: 7
+            },
+            {
+                text: "Which factors affect the spread of a parasite?",
+                options: ["1) Host abundance", "2) Host accessibility and ecosystem diversity", "3) Transmission rate of parasites", "4) Length of life of an infected host", "3 and 4", "1 and 2", "1, 2, 3, and 4", "1, 3, and 4"],
+                correct: 6
+            },
+            {
+                text: "What is the term used to explain the concept that the biological and geological forces shaping dune formation are the same today that they were in the geological past?",
+                options: ["Competition", "Succession", "Gaia Hypothesis", "Uniformitarianism"],
+                correct: 3
+            },
+            {
+                text: "Zooxanthellae are:",
+                options: ["Symbiotic algae that live inside hermatypic corals", "Responsible for primary production in coral reef ecosystems", "Part of a mutualistic symbiosis", "All of the above"],
+                correct: 3
+            },
+            {
+                text: "The marine pelagic environment differs from typical terrestrial (land) environments because it is:",
+                options: ["dilute", "fluid", "three-dimensional", "all of the above"],
+                correct: 3
+            },
+            {
+                text: "Crown of thorns starfish feed directly on corals. What is this an example of?",
+                options: ["Mutualism", "Commensalism", "Parasitism", "Predator-prey relationship"],
+                correct: 3
+            },
+            {
+                text: "Overgrowth is a strategy in which a coral grows up and then outwards, casting a shadow on other corals. This an example of what?",
+                options: ["Exploitation Competition", "Interference Competition", "Commensalism", "Succession"],
+                correct: 0
+            },
+            {
+                text: "Tuna larvae can switch between feeding on different prey types. This will:",
+                options: ["decrease diversity in the ocean", "be best thought of as a commensalistic symbiosis", "drive the evolution of vectors", "dampen potential predator-prey population cycles"],
+                correct: 3
+            },
+            {
+                text: "The surface ocean is very nutrient poor. Phytoplankton (also called algae) are thus under intense pressure to maximize their ability to take up nutrients as efficiently as possible. This is an example of:",
+                options: ["Exploitation competition", "Interference competition", "Predator-prey relationships", "A mutualistic symbiosis"],
+                correct: 0
+            },
+            {
+                text: "The open-ocean is often nutrient limited and hence dominated by the phytoplankton (algae) species that are best adapted to taking up nutrients from the seawater. Often it is the taxa Prochlorococcus that dominates. However, when a strong storm comes through it will mix deep, nutrient-rich water up to the surface. In response to this disturbance, other phytoplankton will grow. Often diatoms are the first to respond and will have a bloom that lasts for a couple of weeks. As they start to deplete the available nutrients, another group of phytoplankton such as dinoflagellates or coccolithophores will take over. Once the nutrients have been completely exhausted, Prochlorococcus will again take over the ecosystem. This is an example of:",
+                options: ["Secondary succession", "Parasitism", "Mutualistic symbioses", "Predator-prey relationships"],
+                correct: 0
+            },
+            {
+                text: "Consider two ocean food chains: 1) Diatoms ⟹ copepods ⟹ sardines 2) Cyanobacteria ⟹ nanoflagellates ⟹ ciliates ⟹ copepods ⟹ sardines. Which statement is true about these food chains?",
+                options: ["The average trophic level of sardines is 4 in both food chains", "In food chain 1 the sardines have a higher trophic level than in food chain 2", "The sardines are at similar trophic levels in both food chains", "Food chain 1 will transfer a higher proportion of primary production to sardines than food chain 2"],
+                correct: 3
+            },
+            {
+                text: "What do you NOT need to consider when designing a protected area:",
+                options: ["the size and spacing between protected areas", "species within the area to be protected", "threats within the area to be protected", "the weather at areas to be protected"],
+                correct: 3
+            },
+            {
+                text: "What is restoration?",
+                options: ["The process of assisting the recovery of an ecosystem that has been degraded, damaged or destroyed", "captive breeding of a species", "introduction of invasive species", "monitoring the hydrology of a system"],
+                correct: 0
+            },
+            {
+                text: "How can climate change impact species?",
+                options: ["Modify their abundance", "Change the timing of migratory and breeding cycles", "Alter their distribution in latitude and elevation", "All other options"],
+                correct: 3
+            },
+            {
+                text: "Which statement is FALSE in relation to designing protected areas:",
+                options: ["Big is better than small", "Connected is better than unconnected", "Near is better than far", "Buffers are not needed"],
+                correct: 3
+            },
+            {
+                text: "Which of the following is a threat to biodiversity?",
+                options: ["Habitat loss", "Overharvesting", "All options", "Climate Change"],
+                correct: 2
+            },
+            {
+                text: "Which statement is true about weather and climate:",
+                options: ["Weather refers to meteorological conditions at a given place on a given day", "Climate refers to long-term averages, patterns, or trends in the weather", "Weather can be predicted for only a couple weeks, while climate can be predicted far into the future", "All of the above"],
+                correct: 3
+            },
+            {
+                text: "The satellite remote sensing record of earth's temperature extends:",
+                options: ["approximately 150 years into the past", "back to the Cretaceous period", "40-50 years into the past", "back to the little Ice Age"],
+                correct: 2
+            },
+            {
+                text: "Recent research indicates that the variation in solar output:",
+                options: ["is the major factor driving temperature change", "is greater than all the anthropogenic factors affecting climate change", "is more than 20 watts/m2", "is less than any of the anthropogenic factors affecting climate change", "will increase by a hundredfold over the next century"],
+                correct: 3
+            },
+            {
+                text: "Which statement is true about radiative forcing?",
+                options: ["Radiative forcing is defined as the change in net downward radiative flux at the top of the atmosphere", "Radiative forcing is proportional to temperature change, although the constant of proportionality depends on feedbacks in the climate system", "Radiative forcing is measured in units of watts per meter squared", "All of the above"],
+                correct: 3
+            },
+            {
+                text: "Increased methane in the atmosphere will lead to a warming climate. If the climate warms the permafrost can thaw, releasing more methane into the atmosphere. This is an example of a _______ feedback:",
+                options: ["negative", "positive", "compensatory"],
+                correct: 1
             }
         ];
         
         let currentQuestion = 0;
+        let selectedOption = -1;
         let stats = {
             'not-learned': 0,
             'still-learning': 0,
@@ -265,21 +672,76 @@
                 const li = document.createElement('li');
                 li.className = 'option';
                 li.textContent = `${String.fromCharCode(65 + index)}. ${option}`;
-                li.onclick = () => selectOption(li);
+                li.onclick = () => selectOption(index, li);
                 optionsList.appendChild(li);
             });
+            
+            // Reset UI
+            document.getElementById('resultMessage').classList.add('hidden');
+            document.getElementById('submitBtn').classList.remove('hidden');
+            document.getElementById('nextBtn').classList.add('hidden');
+            document.getElementById('submitBtn').disabled = true;
+            selectedOption = -1;
         }
         
-        function selectOption(element) {
-            document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+        function selectOption(index, element) {
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
             element.classList.add('selected');
+            selectedOption = index;
+            document.getElementById('submitBtn').disabled = false;
         }
         
-        function markQuestion(level) {
-            stats[level]++;
+        function submitAnswer() {
+            if (selectedOption === -1) return;
+            
+            const question = questions[currentQuestion];
+            const isCorrect = selectedOption === question.correct;
+            const resultMessage = document.getElementById('resultMessage');
+            
+            // Color the options
+            const options = document.querySelectorAll('.option');
+            options.forEach((option, index) => {
+                if (index === question.correct) {
+                    option.classList.add('correct');
+                } else if (index === selectedOption && !isCorrect) {
+                    option.classList.add('incorrect');
+                }
+                option.onclick = null; // Disable clicking
+            });
+            
+            // Show result message and update stats
+            if (isCorrect) {
+                resultMessage.textContent = "✅ Correct! This question is MASTERED";
+                resultMessage.className = "result-message result-correct";
+                stats['mastered']++;
+            } else {
+                // Determine if it's still learning or not learned based on some logic
+                // For now, let's say if it's the first attempt, it's "still learning"
+                // In a real app, you might track attempts per question
+                const isStillLearning = Math.random() > 0.5; // Random for demo, you could make this smarter
+                if (isStillLearning) {
+                    resultMessage.textContent = "⚠️ Incorrect. This question is STILL LEARNING";
+                    resultMessage.className = "result-message result-incorrect";
+                    stats['still-learning']++;
+                } else {
+                    resultMessage.textContent = "❌ Incorrect. This question is NOT LEARNED";
+                    resultMessage.className = "result-message result-incorrect";
+                    stats['not-learned']++;
+                }
+            }
+            
+            resultMessage.classList.remove('hidden');
+            document.getElementById('submitBtn').classList.add('hidden');
+            document.getElementById('nextBtn').classList.remove('hidden');
+            
             updateStats();
-            currentQuestion++;
             updateProgress();
+        }
+        
+        function nextQuestion() {
+            currentQuestion++;
             displayQuestion();
         }
         
@@ -296,12 +758,21 @@
         }
         
         function showCompletion() {
+            const total = Object.values(stats).reduce((a, b) => a + b, 0);
+            const percentage = Math.round((stats['mastered'] / total) * 100);
+            
             document.getElementById('questionContainer').classList.add('hidden');
             document.getElementById('completionMessage').classList.remove('hidden');
+            
+            document.getElementById('finalMastered').textContent = stats['mastered'];
+            document.getElementById('finalStillLearning').textContent = stats['still-learning'];
+            document.getElementById('finalNotLearned').textContent = stats['not-learned'];
+            document.getElementById('finalPercentage').textContent = percentage;
         }
         
         function resetQuiz() {
             currentQuestion = 0;
+            selectedOption = -1;
             stats = {'not-learned': 0, 'still-learning': 0, 'mastered': 0};
             updateStats();
             updateProgress();
